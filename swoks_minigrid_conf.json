@@ -1,0 +1,11 @@
+{
+    "h_len": 200,
+    "r_horizon": 20,
+    "r_discount": 0.99,
+    "num_workers": 16,
+    "emd_limit": 100,
+    "num_tasks": 8,
+    "adj": 1.1,
+    "alpha": 0.001,
+    "stablephase": 80000
+}

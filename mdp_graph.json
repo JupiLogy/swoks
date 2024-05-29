@@ -1,0 +1,31 @@
+{ "general_seed" : 1,
+  "graph_shape": {
+    "d": 2,
+    "b": 2,
+    "p": 0
+  },
+  "reward": {
+    "high_r": 1.0,
+    "fail_r": -0.1,
+    "stochastic_sampling": false,
+    "std_r": 0,
+    "min_static_reward_episodes": 0,
+    "max_static_reward_episodes": 0,
+    "reward_distribution": "needle_in_haystack"
+  },
+  "observations": {
+    "MDP_D": true,
+    "MDP_W": true,
+    "W_IDs": [2,8],
+    "D_IDs": [9,11],
+    "graph_ends": [12,15]
+  },
+  "image_dataset": {
+    "seed": 1,
+    "1D": false,
+    "nr_of_images": 16,
+    "noise_on_read": 0,
+    "rotation_on_read": 1
+  }
+}
+

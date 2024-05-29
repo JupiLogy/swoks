@@ -1,0 +1,9 @@
+*pyc*
+.npy
+*.swp
+results*
+weights*
+*~
+img*
+high_reward_path_log_b.csv
+log*
