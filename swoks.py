@@ -18,9 +18,7 @@ from scipy import stats
 
 class swoks():
     """
-        Required inputs: prediction (value function), action, reward
-
-        Output: environment label
+        Required inputs: observation INFO (latent representation), action, reward
     """
     def __init__(self, configs=None, adopt=False, moreconf=None):
         if configs:
@@ -63,13 +61,15 @@ class swoks():
         with open(moreconf.log_dir+"/json.json","w") as f:
             json.dump(self.config,f)
 
-    def step(self, vals, r, a, supp=None, raw_state=None):
+    def step(self, r, a, supp=None, raw_state=None):
         """
-            vals should be new agent internal state (value function) after
-            receiving reward r, as a list with an element for each task.
+            reward is r.
             a is action taken.
             supp should be supplementary state info - for example, 2nd last layer of nn; or latent representation
         """
+        if supp is None:
+            raise AssertionError("swoks needs supplementary state info from your neural network!")
+
         self.ts += 1
 
         if type(a) != np.ndarray:

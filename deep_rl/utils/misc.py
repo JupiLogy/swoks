@@ -134,9 +134,7 @@ def run_iterations_plus_swoks(agent, swoks, man_labels=False):
                 #SWOKS code here
                 for i in range(len(actions_list)): #for each agent
                     for j in range(len(actions_list[0])): #for each timestep in rollout
-                        swoks.step([values_list[0][j][i],values_list[1][j][i],values_list[2][j][i],\
-                            0], # values_list[3][j][i]],\
-                            reward_list[i][j], actions_list[i][j], supp=states_info_list[i][j])
+                        swoks.step(reward_list[i][j], actions_list[i][j], supp=states_info_list[i][j])
 
                 steps.append(agent.total_steps)
                 rewards.append(np.mean(agent.last_episode_rewards))
