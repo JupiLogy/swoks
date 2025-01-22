@@ -11,7 +11,8 @@ class ContextDetector(ABC):
     if cd_ks.pval() < 0.005:
       cd_ks.set_task(2)
 
-    Histories must be manually updated also.
+    main_hist must be manually updated.
+    Updating wass_hist is down to the context detector.
     """
     def __init__(self, main_hist, wass_hist=None, ot_alg=None, needs_updating=False,\
                  adj=1):
@@ -70,12 +71,16 @@ class HistoryManager():
 
         # Initialise Task memories
         self.hist_dict = {0:deque(maxlen=self.h_len)}
+        self.testing = False
 
     def __len__(self):
         return len(self.history)
 
     def update(self, data):
-        self.hist_dict[task].update(self.history[0])
+        if len(self.history) == self.history.maxlen and not self.testing:
+            # Archiving moving window, funnelling into task history
+            # But only if window is full and we are sure of task.
+            self.hist_dict[task].update(self.history.popleft())
         self.history.update(data)
 
     def new_window(self):
@@ -93,7 +98,8 @@ class HistoryManager():
             return
 
         # Trim history
-        self.history = self.history[-self.h_len:]
+        while len(self.history) > self.h_len:
+            self.history.popleft()
 
         if task in self.hist_dict.keys:
             self.task = task
@@ -102,19 +108,61 @@ class HistoryManager():
             self.hist_dict[task] = deque(maxlen=self.h_len)
 
 class cd_ks(ContextDetector):
-    def __init__(self, main_hist, wass_hist):
-        super().__init__(main_hist, wass_hist)
+    def __init__(self, main_hist, wass_hist, ot_alg, adj):
+        super().__init__(main_hist, wass_hist=wass_hist, ot_alg=ot_alg,\
+                         needs_updating=True, adj=adj)
+        self.ts = 0
 
     def update(self):
-        pass
+        self.ts += 1
+        if self.ts % self.hist.maxlen == 0:
+            self.ts = 0
+            self.wass_hist.update(self.get_wass())
 
-    def pval(self):
-        # TODO: change task functionality
-        return stats.ks_2samp(self.adj*self.hist.old_window(),\
-                              self.hist.new_window(),"greater").pvalue
+    def get_wass(self):
+        return self.ot(self.hist.old_window(), self.hist.new_window())
+
+    def pval(self, task=None):
+        if task is None:
+            return stats.ks_2samp(self.adj*self.wass_hist.old_window(),\
+                                  self.wass_hist.new_window(),"greater").pvalue
+        else:
+            return stats.ks_2samp(self.adj*self.wass_hist.dict_hist[task],\
+                                  self.wass_hist.new_window(),"greater").pvalue
 
 class cd_ad(ContextDetector):
     # Blah
+    pass
 
 class cd_cvm(ContextDetector):
     # Blah
+    pass
+
+def wass(seed):
+    """
+    Generates a Wasserstein function that uses a given seed, for reproducibility.
+    Seed can still be overwritten if that's what suits you.
+    """
+    def inner_wass(x,y,seed=seed):
+        weights1, weights2 = [np.ones(len(x))/len(x), np.ones(len(y))/len(y)]
+        try:
+            return ot.sliced_wasserstein_distance(x, y, a=w1, b=w2, seed=seed)
+        except RuntimeError:
+            warnings.warn("Wasserstein did not converge; if this happens often, increase Wass max iterations.", category=RuntimeWarning)
+
+"""
+Copyright (C) 2024-2025 Jeffery Dick
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
