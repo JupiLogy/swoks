@@ -5,6 +5,13 @@ class ContextDetector(ABC):
     """
     Class to be inherited by general swoks modules -
     KS, CvM, AD, CUSUM, FELT, etc.
+
+    Task changes must be manually performed based on returned pvals.
+    eg,
+    if cd_ks.pval() < 0.005:
+      cd_ks.set_task(2)
+
+    Histories must be manually updated also.
     """
     def __init__(self, main_hist, wass_hist=None, ot_alg=None, needs_updating=False,\
                  adj=1):
