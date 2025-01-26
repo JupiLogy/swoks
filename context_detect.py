@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import deque
+from scipy import stats
 
 class ContextDetector(ABC):
     """
@@ -14,8 +15,8 @@ class ContextDetector(ABC):
     main_hist must be manually updated.
     Updating wass_hist is down to the context detector.
     """
-    def __init__(self, main_hist, wass_hist=None, ot_alg=None, needs_updating=False,\
-                 adj=1):
+    def __init__(self, main_hist, wass_hist=None, ot_alg=None,\
+                 needs_updating=False, adj=1):
         self.hist = main_hist
         self.wass_hist = wass_hist
         self.ot = ot_alg
@@ -80,8 +81,8 @@ class HistoryManager():
         if len(self.history) == self.history.maxlen and not self.testing:
             # Archiving moving window, funnelling into task history
             # But only if window is full and we are sure of task.
-            self.hist_dict[task].update(self.history.popleft())
-        self.history.update(data)
+            self.hist_dict[task].append(self.history.popleft())
+        self.history.append(data)
 
     def new_window(self):
         return self.history[-self.h_len:]
@@ -137,18 +138,6 @@ class cd_ad(ContextDetector):
 class cd_cvm(ContextDetector):
     # Blah
     pass
-
-def wass(seed):
-    """
-    Generates a Wasserstein function that uses a given seed, for reproducibility.
-    Seed can still be overwritten if that's what suits you.
-    """
-    def inner_wass(x,y,seed=seed):
-        weights1, weights2 = [np.ones(len(x))/len(x), np.ones(len(y))/len(y)]
-        try:
-            return ot.sliced_wasserstein_distance(x, y, a=w1, b=w2, seed=seed)
-        except RuntimeError:
-            warnings.warn("Wasserstein did not converge; if this happens often, increase Wass max iterations.", category=RuntimeWarning)
 
 """
 Copyright (C) 2024-2025 Jeffery Dick
