@@ -183,6 +183,7 @@ dependencies:
     - fasteners==0.19
     - glfw==2.6.2
     - gym==0.26.2
+    - gym-ctgraph==1.0
     - gym-notices==0.0.8
     - gymnasium==0.28.1
     - imageio-ffmpeg==0.4.9
