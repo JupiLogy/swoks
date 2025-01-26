@@ -15,11 +15,13 @@ import numpy as np
 import math
 import ot
 from scipy import stats
-import context_detect
+import context_detect, optimal_transport
 
 class swoks():
     """
-        Required inputs: observation INFO (latent representation), action, reward
+        Required inputs: observation INFO (latent representation),
+                         action,
+                         reward
     """
     def __init__(self, configs=None, adopt=False, moreconf=None):
         if configs:
@@ -58,11 +60,21 @@ class swoks():
             needs_updating = True
         else:
             needs_updating = False
-        self.context_detector = self.config["context_detector"](
+
+        ot_dict = {"SlicedWass":optimal_transport.sliced_wass(self.seed),}
+        cd_dict = {"KS":context_detect.cd_ks,
+                   "CvM": context_detect.cd_cvm,
+                   "AD": context_detect.cd_ad,}
+        try:
+            self.ot_alg=ot_dict[self.config["ot_alg"]]
+        except KeyError:
+            raise KeyError("check ot_alg in config matches \"SlicedWass\".")
+
+        self.context_detector = cd_dict[self.config["context_detector"]](
             self.hist,
             wass_hist=self.wass_hist,
             ot_alg=self.config["ot_alg"],
-            needs_updating=needs_updating,
+            #needs_updating=needs_updating,
             adj=self.config["adj"]
         )
         with open(moreconf.log_dir+"/json.json","w") as f:
@@ -72,10 +84,12 @@ class swoks():
         """
             reward is r.
             a is action taken.
-            supp should be supplementary state info - for example, 2nd last layer of nn; or latent representation
+            supp should be supplementary state info - for example,
+                2nd last layer of nn; or latent representation
         """
         if supp is None:
-            raise AssertionError("swoks needs supplementary state info from your neural network!")
+            raise AssertionError("swoks needs supplementary state info"+\
+                                 "from your neural network!")
 
         self.ts += 1
 
@@ -85,8 +99,9 @@ class swoks():
         self.hist.update([np.concatenate((a,[math.sqrt(len(supp))*r],supp))])
 
         # recalculate p-value.
-        if self.ts % self.L_D = 0:
-            self.context_detector.pval(task)
+        if self.ts % self.L_D == 0:
+            for task in self.task_list:
+                self.context_detector.pval(task=task)
             if not self.tested_tasks == []:
                 self.temp_change()
 
@@ -96,7 +111,8 @@ class swoks():
             self.current_task = new_task
 
     def gen_task_label(self):
-        if self.ts - self.last_task_change > self.stablephase and self.pval[self.current_task] < self.alpha:
+        if self.ts - self.last_task_change > self.stablephase and\
+           self.pval[self.current_task] < self.alpha:
             # New task detected.
             self.tested_tasks += [self.current_task]
 
@@ -112,8 +128,9 @@ class swoks():
             self.context_detector.testing = False
             self.context_detector.set_task(self.current_task)
             self.tested_tasks = []
-            self.hist[self.current_task] = np.concatenate((self.old_hist[self.current_task],\
-                                                           self.hist[self.current_task][-self.L_D:]))
+            self.hist[self.current_task] =\
+                np.concatenate((self.old_hist[self.current_task],\
+                                self.hist[self.current_task][-self.L_D:]))
             return
         if self.ts - self.last_task_change > self.L_D*self.L_W:
             # if current task is not right, try the next untested task
@@ -134,7 +151,8 @@ class swoks():
 
     def save(self, filename):
         file = open(filename, "wb")
-        pickle.dump({"hist": self.hist, "old_hist": self.old_hist}, open(filename, "wb"))
+        pickle.dump({"hist": self.hist, "old_hist": self.old_hist},\
+                    open(filename, "wb"))
         file.close()
 
 

@@ -7,5 +7,7 @@
     "num_tasks": 8,
     "adj": 1.1,
     "alpha": 0.001,
-    "stablephase": 50000
+    "stablephase": 50000,
+    "context_detector": "KS",
+    "ot_alg": "SlicedWass"
 }

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import deque
+from scipy import stats
 
 class ContextDetector(ABC):
     """
@@ -80,8 +81,8 @@ class HistoryManager():
         if len(self.history) == self.history.maxlen and not self.testing:
             # Archiving moving window, funnelling into task history
             # But only if window is full and we are sure of task.
-            self.hist_dict[task].update(self.history.popleft())
-        self.history.update(data)
+            self.hist_dict[task].append(self.history.popleft())
+        self.history.append(data)
 
     def new_window(self):
         return self.history[-self.h_len:]
